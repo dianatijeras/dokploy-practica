@@ -1,57 +1,83 @@
 version: '3.8'
 
 services:
-  webapp:
-    build: .
+  # Aplicación Web Express
+  app:
+    image: node:20-alpine
+    container_name: compose-webapp
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DB_HOST=mysql-db
-      - DB_USER=admin_user
-      - DB_PASSWORD=clave_segura_123
-      - DB_NAME=uniquindio_db
+      - DB_HOST=db-uni-quindio
+      - DB_USER=admin_quindio
+      - DB_PASSWORD=76522002
+      - DB_NAME=uni_quindio_db
       - DB_PORT=3306
-      - PG_HOST=postgres-db
-      - PG_USER=postgres_user
-      - PG_PASSWORD=clave_postgres_123
-      - PG_DATABASE=uniquindio_pg_db
+      - PG_HOST=db-postgres-quindio
+      - PG_USER=analyst_quindio
+      - PG_PASSWORD=analytics_2026
+      - PG_DATABASE=analytics_db
       - PG_PORT=5432
-      - REDIS_HOST=redis-cache
+      - REDIS_HOST=redis-cache-quindio
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=clave_redis_123
+      - REDIS_PASSWORD=redis_quindio_2026
+    volumes:
+      - ../files/app-data:/app/data
     depends_on:
-      - mysql-db
-      - postgres-db
-      - redis-cache
+      - db-uni-quindio
+      - db-postgres-quindio
+      - redis-cache-quindio
+    networks:
+      - compose-net
+    restart: unless-stopped
 
-  mysql-db:
-    image: mysql:8
+  # Base de datos MySQL
+  db-uni-quindio:
+    image: mysql:8.0
+    container_name: compose-mysql
     environment:
-      MYSQL_DATABASE: uniquindio_db
-      MYSQL_USER: admin_user
-      MYSQL_PASSWORD: clave_segura_123
-      MYSQL_ROOT_PASSWORD: root_clave_123
+      - MYSQL_ROOT_PASSWORD=76522002
+      - MYSQL_DATABASE=uni_quindio_db
+      - MYSQL_USER=admin_quindio
+      - MYSQL_PASSWORD=76522002
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
+    networks:
+      - compose-net
+    restart: unless-stopped
 
-  postgres-db:
-    image: postgres:18
+  # Base de datos PostgreSQL
+  db-postgres-quindio:
+    image: postgres:16
+    container_name: compose-postgres
     environment:
-      POSTGRES_DB: uniquindio_pg_db
-      POSTGRES_USER: postgres_user
-      POSTGRES_PASSWORD: clave_postgres_123
+      - POSTGRES_DB=analytics_db
+      - POSTGRES_USER=analyst_quindio
+      - POSTGRES_PASSWORD=analytics_2026
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - compose-net
+    restart: unless-stopped
 
-  redis-cache:
-    image: redis:8
-    command: redis-server --requirepass clave_redis_123
+  # Base de datos / Caché Redis
+  redis-cache-quindio:
+    image: redis:alpine
+    container_name: compose-redis
+    command: redis-server --requirepass redis_quindio_2026
     volumes:
-      - redis_data:/data
+      - redis-data:/data
+    networks:
+      - compose-net
+    restart: unless-stopped
 
 volumes:
-  mysql_data:
-  postgres_data:
-  redis_data:
+  mysql-data:
+  postgres-data:
+  redis-data:
+
+networks:
+  compose-net:
+    driver: bridge
